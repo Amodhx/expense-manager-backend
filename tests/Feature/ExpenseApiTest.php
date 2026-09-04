@@ -9,6 +9,24 @@ use Tests\TestCase;
 class ExpenseApiTest extends TestCase
 {
     use RefreshDatabase;
+    public function test_it_filters_expenses_by_type(): void
+    {
+        Expense::factory()->create(['expense_type' => 'travel']);
+        Expense::factory()->create(['expense_type' => 'food']);
+        Expense::factory()->create(['expense_type' => 'food']);
+
+        $response = $this->getJson('/api/expenses?type=food');
+
+        $response->assertOk()->assertJsonCount(2, 'data');
+        $this->assertSame('food', $response->json('data.0.expense_type'));
+    }
+
+    public function test_it_rejects_an_invalid_filter_type(): void
+    {
+        $response = $this->getJson('/api/expenses?type=not-a-real-type');
+
+        $response->assertStatus(422);
+    }
 
     public function test_it_lists_expenses(): void
     {
